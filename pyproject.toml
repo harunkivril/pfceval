@@ -1,0 +1,23 @@
+[project]
+name = "pfceval"
+version = "0.0.1"
+dependencies = [
+  "polars",
+  "matplotlib",
+]
+requires-python = ">=3.12"
+authors = [
+  {name = "Harun KIVRIL", email = "harun.kivril@knmi.nl"}
+]
+maintainers = [
+  {name = "Harun KIVRIL", email = "harun.kivril@knmi.nl"}
+]
+description = "Probabilistic Forecast Evaluation with Polars"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E.*"]
+keywords = ["forecast", "probabilistic", "verification", "polars", "evaluation"]
+classifiers = [
+  "Development Status :: Alfa",
+  "Programming Language :: Python"
+]
