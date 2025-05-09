@@ -1,7 +1,7 @@
 import polars as pl
 import logging
 from .utils import collect
-
+from copy import copy
 
 class Forecast:
 
@@ -59,3 +59,12 @@ class Forecast:
     def collect(self):
         self.fc = collect(self.fc, self.engine)
         self.lazy = False
+
+    def filter(self, *args, **kwargs):
+        sub_fc = self.fc.filter(*args, **kwargs)
+        filtered = self.copy()
+        filtered.fc = sub_fc
+        return filtered
+
+    def copy(self):
+        return copy(self)
