@@ -39,13 +39,13 @@ def brier_score(pred_cols, obs_col, th):
     return (probs - obs)**2
 
 
-def brier_decomposition(data, pred_cols, obs_col, th, engine):
+def brier_decomposition(fc, pred_cols, obs_col, th, engine):
     probs = pl.mean_horizontal(pl.col(pred_cols).gt(th))
     obs = pl.col(obs_col).gt(th)
-    mean_obs = collect(data.select(obs.mean()), engine).item()
-    n = collect(data.select(pl.len()), engine).item()
+    mean_obs = collect(fc.select(obs.mean())).item()
+    n = collect(fc.select(pl.len())).item()
 
-    temp = data.select(prob=probs, obs=obs)
+    temp = fc.select(prob=probs, obs=obs)
     obs_bar = temp.group_by("prob").agg(
         count=pl.col("prob").count(),
         obs_bar=pl.col("obs").mean()
@@ -63,20 +63,19 @@ def brier_decomposition(data, pred_cols, obs_col, th, engine):
         ),
         uncertainity=mean_obs * (1-mean_obs),
     )
-
-    return pl.collect_all([obs_bar, decomp])
+    return collect_all([decomp, obs_bar], engine)
 
 
 def group_brier_decomposition(
-        data, pred_cols, obs_col, th, groupby_cols, engine, lazy=False
+        fc, preds_cols, obs_col, groupby_cols, th, engine,
 ):
     if isinstance(groupby_cols, str):
         groupby_cols = [groupby_cols]
 
-    probs = pl.mean_horizontal(pl.col(pred_cols).gt(th))
+    probs = pl.mean_horizontal(pl.col(preds_cols).gt(th))
     obs = pl.col(obs_col).gt(th)
     group_info = (
-        data
+        fc
         .group_by(groupby_cols)
         .agg(
             n_group=pl.len(),
@@ -84,7 +83,7 @@ def group_brier_decomposition(
         )
     )
 
-    temp = data.with_columns(prob=probs, obs=obs)
+    temp = fc.with_columns(prob=probs, obs=obs)
     obs_bar = (
         temp
         .group_by(["prob"] + groupby_cols)
@@ -108,7 +107,7 @@ def group_brier_decomposition(
             ),
             resolution=(
                 (
-                    pl.col("count")/pl.col("n_group") 
+                    pl.col("count")/pl.col("n_group")
                     * (pl.col("obs_bar") - pl.col("mean_group"))**2
                 ).sum()
             ),
@@ -118,8 +117,5 @@ def group_brier_decomposition(
         )
         .sort(groupby_cols)
     )
-
-    if lazy:
-        return decomp, obs_bar
 
     return collect_all([decomp, obs_bar], engine)
