@@ -180,7 +180,7 @@ def plot_locations(
         ax.gridlines(draw_labels=True)
 
         # Add a title
-        ax.set_title(f"{metric_name} Step:{step} ", fontdict=dict(size=16))
+        ax.set_title(f"{metric_name} Step:{step} ", fontdict={"size": 16})
         fig.tight_layout()
 
 
@@ -188,8 +188,7 @@ def rebin_obs_bar(obs_bar: pl.DataFrame, nbins: int | None):
     if not nbins:
         return obs_bar
 
-    # new_probs = 1/nbins * (np.arange(nbins) + 1/2)
-    new_probs = 1/(nbins-1) * (np.arange(nbins))
+    new_probs = 1/nbins * (np.arange(nbins) + 1/2)
     assigned = np.array(
         [np.argmin(abs(new_probs - p)) for p in obs_bar["prob"]]
     )
@@ -214,7 +213,7 @@ def plot_reliability_diagram(
         table_name: str,
         nbins: int | None = None
 ):
-    if len(evals) > 4:
+    if len(evals) > 3:
         raise ValueError("Too many experiments to plot. Suported max is 3.")
 
     decomp_table = table_name.replace("obs_bar", "brier_decomp")
@@ -223,6 +222,7 @@ def plot_reliability_diagram(
     gs, fig, rel_ax = prep_reliability_ax()
 
     rel_ax.plot([0, 1], [0, 1], linestyle="--", c="black")
+    hist_ax = fig.add_subplot(gs[2, :3])
 
     for i, ev in enumerate(evals):
         obs_bar = (
@@ -258,18 +258,23 @@ def plot_reliability_diagram(
         )
         rel_ax.grid(True)
 
-        ax = fig.add_subplot(gs[2+i//4, i % 4])
-        ax.bar(
+        hist_ax.hist(
             obs_bar["prob"],
-            np.log(obs_bar["count"]),
-            edgecolor="black",
-            width=0.6/(obs_bar.shape[0]-1),
+            bins=len(obs_bar),
+            weights=obs_bar["count"],
+            align="mid",
+            histtype="step",
+            linewidth=2,
+            log=True,
             color=color_list[i],
-            linewidth=0.4
+            fill=True,
+            alpha=0.5
         )
-        ax.set_ylabel("Counts")
-        ax.set_ylabel("Log(Counts)")
-        ax.set_title(ev.experiment_name)
+        hist_ax.set_ylabel("Counts")
+        hist_ax.set_xlim(rel_ax.get_xlim())
+
+    pos_class_ratio = obs_bar["mean_group"].first()
+    hist_ax.set_title(f"Positive Class Ratio: {pos_class_ratio:.4f}")
 
     rel_ax.legend()
     rel_ax.set_title(
