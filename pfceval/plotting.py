@@ -42,7 +42,7 @@ def get_common_metrics(evals: list[Evaluation], table_name: str):
     return list(metric_set)
 
 
-def plot_lead_time(
+def plot_lead_time_metrics(
     *evals: Evaluation,
     table_name: str = "lead_time_metrics",
     metrics: list[str] | None = None,
@@ -85,7 +85,7 @@ def plot_lead_time(
                     alpha=0.2,
                     label=f"{meta['CI']}% CI ({label_name})"
                 )
-                bootstrap_status = f" Bootstrapped N:{meta["n_iter"]}"
+                bootstrap_status = f" Bootstrapped N:{meta['n_iter']}"
             else:
                 ax.plot(
                     table[ev.lead_time_col],
@@ -106,7 +106,7 @@ def plot_lead_time(
         fig.show()
 
 
-def plot_locations(
+def plot_location_metrics(
         step,
         evaluation: Evaluation,
         compare_with: Evaluation = None,
@@ -278,7 +278,7 @@ def plot_reliability_diagram(
 
     rel_ax.legend()
     rel_ax.set_title(
-        f"Reliability Diagram | Th:{th} | CI:{meta['CI']} N:{meta["n_iter"]}")
+        f"Reliability Diagram | Th:{th} | CI:{meta['CI']} N:{meta['n_iter']}")
     rel_ax.set_ylabel("Observed Frequency")
     rel_ax.set_xlabel("Predicted Probability")
     fig.tight_layout()
