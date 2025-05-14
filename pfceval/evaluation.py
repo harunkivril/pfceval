@@ -36,7 +36,7 @@ class Evaluation:
             json.dump(serializable_results, file)
 
     @classmethod
-    def get_report(cls, path):
+    def load_report(cls, path):
         with open(path, "r", encoding="utf8") as file:
             serializable_results = json.load(file)
 
@@ -54,7 +54,7 @@ class Evaluation:
     @classmethod
     def fill_evaluation(
         cls, calculator, experiment_name, lead_time_col, location_id_col,
-        bootstrap=False, n_iter=300, CI=0.9
+        bootstrap=False, n_iter=300, CI=0.9, location_metrics=True
     ):
         available_metrics = [
             x.replace("absolute_error", "mae").replace("squared_error", "mse")
@@ -72,19 +72,20 @@ class Evaluation:
             calculator.get_metrics(lead_time_col),
             {"metrics": available_metrics, "groupby": lead_time_col}
         )
+        
+        if location_metrics:
+            groupby = [lead_time_col, location_id_col]
+            obj.add_table(
+                "lead_time_location_metrics",
+                calculator.get_metrics(groupby),
+                {"metrics": available_metrics, "groupby": groupby}
+            )
 
-        groupby = [lead_time_col, location_id_col]
-        obj.add_table(
-            "lead_time_location_metrics",
-            calculator.get_metrics(groupby),
-            {"metrics": available_metrics, "groupby": groupby}
-        )
-
-        obj.add_table(
-            "station_meta",
-            calculator.get_station_meta(location_id_col),
-            {"on": location_id_col}
-        )
+            obj.add_table(
+                "station_meta",
+                calculator.get_station_meta(location_id_col),
+                {"on": location_id_col}
+            )
 
         if bootstrap:
             obj.add_table(
@@ -131,3 +132,14 @@ class Evaluation:
 
     def tables(self):
         return list(self.results.keys())
+    
+    def extend(self, other, right_prefix=None):
+        assert self.lead_time_col == other.lead_time_col
+        assert self.location_id_col == other.location_id_col
+
+        if not right_prefix:
+            assert not set(self.tables()).intersection(set(other.tables()))
+            self.results = {**self.results, **other.results}
+        else:
+            for table in other.tables():
+                self.results[f"{right_prefix}_{table}"] = other[table].copy()
