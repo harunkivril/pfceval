@@ -282,3 +282,65 @@ def plot_reliability_diagram(
     rel_ax.set_ylabel("Observed Frequency")
     rel_ax.set_xlabel("Predicted Probability")
     fig.tight_layout()
+
+
+def plot_spread_rmse(ev, table_name="bootstraped_lead_time_metrics"):
+
+    table = ev[table_name]["values"]
+    meta = ev[table_name]["metadata"]
+    metrics = meta["metrics"]
+    assert "spread" in metrics
+    assert "mse" in metrics
+
+    table = table.with_columns(
+        pl.col(ev.lead_time_col).dt.total_hours(),
+    )
+    table = table.with_columns(
+        pl.col("^mse_.*$").sqrt().name.map(lambda x: x.replace("mse_", "rmse_"))
+    )
+
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+    ax.grid(True)
+
+    for metric in ("rmse", "spread"):
+        label_name = (
+            f"{ev.experiment_name}: "
+            + " ".join(x.upper() for x in metric.split("_"))
+        )
+        bootstrap_status = ""
+
+        if meta.get("n_iter"):
+            lq, uq = sorted(x for x in table.columns if f"{metric}_q" in x)
+            ax.plot(
+                table[ev.lead_time_col],
+                table[f"{metric}_mean"],
+                marker="o",
+                label=label_name
+            )
+            ax.fill_between(
+                table[ev.lead_time_col],
+                table[lq],
+                table[uq],
+                alpha=0.2,
+                label=f"{meta['CI']}% CI ({label_name})"
+            )
+            bootstrap_status = f" Bootstrapped N:{meta['n_iter']}"
+        else:
+            ax.plot(
+                table[ev.lead_time_col],
+                table[metric],
+                marker="o",
+                label=label_name
+            )
+
+        metric_name = " ".join(x.upper() for x in metric.split("_"))
+        ax.set_title(
+            f"{metric_name} by {ev.lead_time_col.capitalize()}"
+            + f"{bootstrap_status}"
+        )
+        ax.set_xlabel(ev.lead_time_col.capitalize())
+        ax.set_ylabel(metric.capitalize())
+        ax.legend()
+
+        fig.show()
