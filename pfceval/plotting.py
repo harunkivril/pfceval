@@ -171,6 +171,9 @@ def plot_location_metrics(
             crs=ccrs.PlateCarree()
         )
         vmin, vmax = np.quantile(value, 0.01), np.quantile(value, 0.99)
+        if compare_with:
+            abs_max = max(abs(vmin), abs(vmax))
+            vmin, vmax = -abs_max, abs_max
         img = ax.scatter(
             lon, lat, s=dot_size, c=value, vmax=vmax, vmin=vmin, alpha=0.7)
         cbar = fig.colorbar(img)
