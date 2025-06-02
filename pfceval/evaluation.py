@@ -3,6 +3,7 @@ import polars as pl
 import json
 
 from ast import literal_eval
+from .calculator import Calculator
 
 class Evaluation:
 
@@ -53,7 +54,7 @@ class Evaluation:
 
     @classmethod
     def fill_evaluation(
-        cls, calculator, experiment_name, lead_time_col, location_id_col,
+        cls, calculator: Calculator, experiment_name, lead_time_col, location_id_col,
         bootstrap=False, n_iter=300, CI=0.9, location_metrics=True
     ):
         available_metrics = [
@@ -100,7 +101,7 @@ class Evaluation:
         self.results[table_name] = {"values": values, "metadata": metadata}
 
 
-    def add_brier_decomp(self, calculator, n_iter, th, CI):
+    def add_brier_decomp(self, calculator: Calculator, n_iter, th, CI):
         decomp, obs_bar = calculator.get_bootstrapped_brier_decomp(
             n_iter=n_iter, th=th, groupby_cols=self.lead_time_col, CI=CI
         )
@@ -126,6 +127,18 @@ class Evaluation:
             obs_bar,
             metadata,
         )
+    
+    def add_rank_histogram(self, calculator: Calculator, nbins, groupby_cols):
+        counts, bins = calculator.get_rank_histogram(
+            nbins=nbins,
+            groupby_cols=groupby_cols,
+        )
+        metadata = {
+            "metrics": ["counts"],
+            "bins": bins,
+            "groupby": groupby_cols,
+        }
+        self.add_table("lead_time_rank_histogram", counts,metadata )
 
     def __getitem__(self, key):
         return self.results[key]

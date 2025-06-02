@@ -1,4 +1,5 @@
 import polars as pl
+import numpy as np
 
 from .data import Forecast
 from . import metrics
@@ -65,6 +66,35 @@ class Calculator:
         expression = metrics.brier_score(
             self.forecast.pred_cols, self.forecast.obs_col, th=th)
         self.add_metric(f"brier_th:{th}", expression)
+
+    def get_rank_histogram(self, n_bins, groupby_cols=None):
+        cols_to_rank =  [self.forecast.obs_col] + self.forecast.pred_cols
+        rank_exp = (pl.concat_list(cols_to_rank)
+            .list.eval(pl.element().rank())
+            .list.first()
+            .alias("counts") - 1)
+        if groupby_cols:
+            ranks = self.forecast.fc.select(groupby_cols, rank_exp)
+        else:
+            ranks =  self.forecast.fc.select(rank_exp)
+
+        n_ens = len(self.forecast.pred_cols)
+        step = n_ens/n_bins
+        bins = (
+            [-1e-5] + list(x*step - 1e-5 for x  in range(1, n_bins)) + [n_ens]
+        )
+        labels = np.arange(0, len(bins)) * step
+        if groupby_cols is None:
+            ranks = ranks.with_columns(group=pl.lit("all"))
+            groupby_cols = "group"
+        
+        hist_vals = (
+            ranks
+            .group_by(groupby_cols)
+            .agg(pl.col("counts").hist(bins=bins))
+        )
+        
+        return hist_vals, labels
 
     def get_brier_decomp(self, th, groupby_cols=None):
         if groupby_cols is None:

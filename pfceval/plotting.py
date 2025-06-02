@@ -287,7 +287,7 @@ def plot_reliability_diagram(
     fig.tight_layout()
 
 
-def plot_spread_rmse(ev, table_name="bootstraped_lead_time_metrics"):
+def plot_spread_rmse(ev: Evaluation, table_name="bootstraped_lead_time_metrics"):
 
     table = ev[table_name]["values"]
     meta = ev[table_name]["metadata"]
@@ -347,3 +347,28 @@ def plot_spread_rmse(ev, table_name="bootstraped_lead_time_metrics"):
         ax.legend()
 
         fig.show()
+
+
+def plot_rank_histogram(
+    ev: Evaluation, step, table_name="lead_time_rank_histogram"
+):
+    table = ev[table_name]["values"]
+    meta = ev[table_name]["metadata"]
+
+    bins = meta["bins"]
+
+    # Counts are in list form. Get the counts of given step.
+    counts = (
+        table
+        .filter(pl.col(ev.lead_time_col) == pl.duration(hours=step))
+        .select(pl.col("counts"))
+        .first()
+    )
+
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+    ax.grid(True)
+    ax.hist(bins[:-1], bins, weights=counts)
+    ax.set_title(f"Rank Histogram | Step:{step}")
+    
+    fig.show()
