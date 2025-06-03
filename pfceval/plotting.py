@@ -357,13 +357,10 @@ def plot_rank_histogram(
 
     bins = meta["bins"]
 
-    # Counts are in list form. Get the counts of given step.
-    counts = (
-        table
-        .filter(pl.col(ev.lead_time_col) == pl.duration(hours=step))
-        .select(pl.col("counts"))
-        .first()
-    )
+    # Counts are in list form. Get the counts of the given step.
+    counts = table.filter(
+        pl.col(ev.lead_time_col) == pl.duration(hours=step)
+    )["counts"].first()
 
     fig = plt.figure(figsize=(10, 6))
     ax = plt.gca()
