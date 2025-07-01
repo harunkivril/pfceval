@@ -383,7 +383,9 @@ def plot_reliability_diagram(
         bs = round(rel - res + unc, 3)
 
         obs_bar = rebin_obs_bar(obs_bar, nbins)
-        label_name = f"{ev.experiment_name}|Rel:{rel}|Res:{res}|BS:{bs}"
+        label_name = (
+            f"{ev.experiment_name}|Step:{step}|Rel:{rel}|Res:{res}|BS:{bs}"
+        )
         meta = ev[table_name]["metadata"]
 
         lq, uq = sorted(x for x in obs_bar.columns if "obs_bar_q" in x)
