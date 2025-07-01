@@ -150,7 +150,7 @@ class Calculator:
             .list.first()
             .alias("counts") - 1)
         if groupby_cols:
-            ranks = self.forecast.fc.select(groupby_cols, rank_exp)
+            ranks = self.forecast.fc.select(*groupby_cols, rank_exp)
         else:
             ranks =  self.forecast.fc.select(rank_exp)
 

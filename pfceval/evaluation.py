@@ -1,9 +1,9 @@
 import os
 import polars as pl
 import json
-import logging # Added for logging
+import logging
 
-from .calculator import Calculator # Assuming this import path is correct
+from .calculator import Calculator
 
 class Evaluation:
     """
@@ -135,7 +135,7 @@ class Evaluation:
                         f" '{table_name}' not found. Skipping this table."
                     )
             elif "values" in table_info:
-                 # For non-DataFrame items stored directly in the manifest
+                 # For non-DataFrame items stored directly
                  results[table_name] = table_info
             else:
                 logging.warning(
@@ -267,18 +267,24 @@ class Evaluation:
             metadata,
         )
     
-    def add_rank_histogram(self, calculator: Calculator, nbins: int,
-                           groupby_cols: str | list[str]):
+    def add_rank_histogram(self, calculator: Calculator, n_bins: int,
+                           groupby_cols: str | list[str] = None):
         """
         Adds rank histogram results to the evaluation.
 
         Args:
             calculator (Calculator): An initialized Calculator object.
-            nbins (int): Number of bins for the histogram.
+            n_bins (int): Number of bins for the histogram.
             groupby_cols (str | list[str]): Column(s) to group by.
         """
+        if groupby_cols is None:
+            groupby_cols = [self.lead_time_col]
+
+        if isinstance(groupby_cols, str):
+            groupby_cols = [groupby_cols]
+
         counts, bins = calculator.get_rank_histogram(
-            nbins=nbins,
+            n_bins=n_bins,
             groupby_cols=groupby_cols,
         )
         metadata = {
