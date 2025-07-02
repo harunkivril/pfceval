@@ -15,7 +15,8 @@ class Calculator:
         seed (int): The random seed for reproducibility.
         forecast (Forecast): An instance of the Forecast class containing
                              forecast data.
-        metrics_df (pl.DataFrame): A Polars DataFrame to store computed metrics.
+        metrics_df (pl.DataFrame): A Polars DataFrame to store computed
+            metrics.
         added_metrics (list): A list of names of metrics that have been added.
         unique_bootstrap (pl.DataFrame): A Polars DataFrame containing unique
                                          bootstrap sample identifiers.
@@ -84,8 +85,8 @@ class Calculator:
 
     def add_mae(self):
         """
-        Ensures that the absolute error metric is added, which is a prerequisite
-        for MAE.
+        Ensures that the absolute error metric is added, which is a
+        prerequisite for MAE.
         """
         if "absolute_error" not in self.added_metrics:
             self.add_absolute_error()
@@ -108,8 +109,8 @@ class Calculator:
 
     def add_twcrps(self, th: float):
         """
-        Adds the Threshold-Weighted Continuous Ranked Probability Score (TWCRPS)
-        metric to the metrics_df DataFrame.
+        Adds the Threshold-Weighted Continuous Ranked Probability Score
+            (TWCRPS) metric to the metrics_df DataFrame.
 
         Args:
             th (float): The threshold for TWCRPS.
@@ -130,8 +131,8 @@ class Calculator:
         self.add_metric(f"brier_th:{th}", expression)
 
     def get_rank_histogram(
-            self, n_bins: int, groupby_cols: list = None
-        ) -> tuple[pl.DataFrame, np.ndarray]:
+        self, n_bins: int, groupby_cols: list = None
+    ) -> tuple[pl.DataFrame, np.ndarray]:
         """
         Computes the rank histogram for the forecast data.
 
@@ -144,37 +145,39 @@ class Calculator:
             tuple[pl.DataFrame, np.ndarray]: A tuple containing the histogram
                                              values and bin labels.
         """
-        cols_to_rank =  [self.forecast.obs_col] + self.forecast.pred_cols
-        rank_exp = (pl.concat_list(cols_to_rank)
+        cols_to_rank = [self.forecast.obs_col] + self.forecast.pred_cols
+        rank_exp = (
+            pl.concat_list(cols_to_rank)
             .list.eval(pl.element().rank())
             .list.first()
-            .alias("counts") - 1)
+            .alias("counts") - 1
+        )
         if groupby_cols:
             ranks = self.forecast.fc.select(*groupby_cols, rank_exp)
         else:
-            ranks =  self.forecast.fc.select(rank_exp)
+            ranks = self.forecast.fc.select(rank_exp)
 
         n_ens = len(self.forecast.pred_cols)
         step = n_ens/n_bins
         bins = (
-            [-1e-5] + list(x*step - 1e-5 for x  in range(1, n_bins)) + [n_ens]
+            [-1e-5] + list(x*step - 1e-5 for x in range(1, n_bins)) + [n_ens]
         )
         labels = list(np.round(np.arange(0, len(bins)) * step, 5))
         if groupby_cols is None:
             ranks = ranks.with_columns(group=pl.lit("all"))
             groupby_cols = "group"
-        
+
         hist_vals = (
             ranks
             .group_by(groupby_cols)
             .agg(pl.col("counts").hist(bins=bins))
         )
-        
+
         return hist_vals, labels
 
     def get_brier_decomp(
-            self, th: float, groupby_cols: list = None
-        ) -> tuple[pl.DataFrame, pl.DataFrame]:
+        self, th: float, groupby_cols: list = None
+    ) -> tuple[pl.DataFrame, pl.DataFrame]:
         """
         Computes the Brier Score decomposition.
 
@@ -207,12 +210,12 @@ class Calculator:
         )
 
     def get_bootstrapped_brier_decomp(
-            self,
-            n_iter: int,
-            th: float,
-            groupby_cols: list,
-            CI: float = 0.9
-        ) -> tuple[pl.DataFrame, pl.DataFrame]:
+        self,
+        n_iter: int,
+        th: float,
+        groupby_cols: list,
+        CI: float = 0.9
+    ) -> tuple[pl.DataFrame, pl.DataFrame]:
         """
         Computes bootstrapped Brier Score decomposition with confidence
         intervals.
@@ -303,10 +306,11 @@ class Calculator:
         return all_decomps, all_obs_bars
 
     def get_metrics(
-            self, groupby_cols: list = None
-        ) -> pl.DataFrame:
+        self, groupby_cols: list = None
+    ) -> pl.DataFrame:
         """
-        Retrieves the computed metrics, optionally grouped by specified columns.
+        Retrieves the computed metrics, optionally grouped by specified
+            columns.
 
         Args:
             groupby_cols (list, optional): A list of columns to group by.
@@ -332,18 +336,18 @@ class Calculator:
             .rename(lambda x: x.replace("squared_error", "mse")),
             self.forecast.engine
         )
-    
+
     def get_station_meta(self, station_id_col: str) -> pl.DataFrame:
         """
         Retrieves station metadata, including latitude and longitude.
 
         Args:
-            station_id_col (str): The name of the column containing station 
+            station_id_col (str): The name of the column containing station
                 IDs.
 
         Returns:
             pl.DataFrame: A Polars DataFrame with unique station IDs,
-                          latitudes, and longitudes.
+                latitudes, and longitudes.
         """
         return collect(
             self.forecast.fc
@@ -352,8 +356,8 @@ class Calculator:
         )
 
     def bootstrap_metrics(
-            self, n_iter: int, groupby_cols: list, CI: float = 0.9
-        ) -> pl.DataFrame:
+        self, n_iter: int, groupby_cols: list, CI: float = 0.9
+    ) -> pl.DataFrame:
         """
         Performs bootstrap resampling to compute metrics with confidence
         intervals.
@@ -364,8 +368,8 @@ class Calculator:
             CI (float, optional): The confidence interval. Defaults to 0.9.
 
         Returns:
-            pl.DataFrame: A Polars DataFrame containing the bootstrapped metrics
-                          with confidence intervals.
+            pl.DataFrame: A Polars DataFrame containing the bootstrapped
+                metrics with confidence intervals.
         """
         if isinstance(groupby_cols, str):
             groupby_cols = [groupby_cols]
