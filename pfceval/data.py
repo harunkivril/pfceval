@@ -48,12 +48,12 @@ class Forecast:
         self.engine = engine
 
         if load_to_memory:
-            self.fc = pl.read_parquet(fc_path)
-            self.columns = self.fc.columns
+            self.forecast = pl.read_parquet(fc_path)
+            self.columns = self.forecast.columns
             self.lazy = False
         else:
-            self.fc = pl.scan_parquet(fc_path)
-            self.columns = self.fc.collect_schema().names()
+            self.forecast = pl.scan_parquet(fc_path)
+            self.columns = self.forecast.collect_schema().names()
             self.lazy = True
 
         if isinstance(bootstrap_cols, str):
@@ -72,7 +72,7 @@ class Forecast:
         self.deterministic_col = deterministic_col
 
         # Generate a single bootstrap column and mean prediction
-        self.fc = self.fc.with_columns(
+        self.forecast = self.forecast.with_columns(
             pl.mean_horizontal(pl.col(self.pred_cols)).alias(deterministic_col),
             _bootstrap=pl.concat_str(
                 (pl.col(col) for col in bootstrap_cols),
@@ -101,7 +101,7 @@ class Forecast:
         Returns:
             pl.DataFrame | pl.LazyFrame: Data with selected cols.
         """
-        return self.fc.select(*args, **kwargs)
+        return self.forecast.select(*args, **kwargs)
 
     def collect(self):
         """
@@ -109,7 +109,7 @@ class Forecast:
         Sets `self.lazy` to False after collection.
         """
         if self.lazy:
-            self.fc = collect(self.fc, self.engine)
+            self.forecast = collect(self.forecast, self.engine)
             self.lazy = False
 
     def filter(self, *args, **kwargs) -> 'Forecast':
@@ -120,9 +120,9 @@ class Forecast:
         Returns:
             Forecast: New Forecast instance with filtered data.
         """
-        sub_fc = self.fc.filter(*args, **kwargs)
+        sub_fc = self.forecast.filter(*args, **kwargs)
         filtered = self.copy() # Shallow copy
-        filtered.fc = sub_fc
+        filtered.forecast = sub_fc
         return filtered
 
     def copy(self) -> 'Forecast':

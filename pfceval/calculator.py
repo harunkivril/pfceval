@@ -1,5 +1,6 @@
 import polars as pl
 import numpy as np
+import math
 
 from .data import Forecast
 from . import metrics
@@ -41,7 +42,7 @@ class Calculator:
             forecast.select(pl.col("_bootstrap").unique()))
         self.n_bootstrap = collect(
             self.unique_bootstrap.select(pl.len()), forecast.engine
-        )
+        ).item()
 
     def add_metric(self, name: str, expression: pl.Expr):
         """
@@ -153,9 +154,9 @@ class Calculator:
             .alias("counts") - 1
         )
         if groupby_cols:
-            ranks = self.forecast.fc.select(*groupby_cols, rank_exp)
+            ranks = self.forecast.forecast.select(*groupby_cols, rank_exp)
         else:
-            ranks = self.forecast.fc.select(rank_exp)
+            ranks = self.forecast.forecast.select(rank_exp)
 
         n_ens = len(self.forecast.pred_cols)
         step = n_ens/n_bins
@@ -193,7 +194,7 @@ class Calculator:
         """
         if groupby_cols is None:
             return metrics.brier_decomposition(
-                self.forecast.fc,
+                self.forecast.forecast,
                 self.forecast.pred_cols,
                 self.forecast.obs_col,
                 th,
@@ -201,7 +202,7 @@ class Calculator:
             )
 
         return metrics.group_brier_decomposition(
-                self.forecast.fc,
+                self.forecast.forecast,
                 self.forecast.pred_cols,
                 self.forecast.obs_col,
                 groupby_cols,
@@ -247,7 +248,7 @@ class Calculator:
             )
 
             temp = (
-                self.forecast.fc
+                self.forecast.forecast
                 .lazy()
                 .filter(pl.col("_bootstrap").is_in(selected))
             )
@@ -268,8 +269,8 @@ class Calculator:
 
         uq = (1 + CI)/2
         lq = (1 - CI)/2
-        uq_suffix = f"_q{round(uq*100):03}"
-        lq_suffix = f"_q{round(lq*100):03}"
+        uq_suffix = f"_q{math.floor(uq*100):03}"
+        lq_suffix = f"_q{math.ceil(lq*100):03}"
         decomp_cols = ["reliability", "resolution", "uncertainity"]
 
         all_decomps = (
@@ -350,7 +351,7 @@ class Calculator:
                 latitudes, and longitudes.
         """
         return collect(
-            self.forecast.fc
+            self.forecast.forecast
             .select(pl.col([station_id_col, "latitude", "longitude"]))
             .group_by(station_id_col).first()
         )
@@ -397,8 +398,8 @@ class Calculator:
 
         uq = (1 + CI)/2
         lq = (1 - CI)/2
-        uq_suffix = f"_q{round(uq*100):03}"
-        lq_suffix = f"_q{round(lq*100):03}"
+        uq_suffix = f"_q{math.floor(uq*100):03}"
+        lq_suffix = f"_q{math.ceil(lq*100):03}"
 
         all_iter = (
             pl.concat(all_iter)

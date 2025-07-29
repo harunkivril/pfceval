@@ -172,8 +172,8 @@ def group_brier_decomposition(
     if isinstance(groupby_cols, str):
         groupby_cols = [groupby_cols]
 
-    probs = pl.mean_horizontal(pl.col(preds_cols).gt(th))
-    obs = pl.col(obs_col).gt(th)
+    probs = pl.mean_horizontal(pl.col(preds_cols).ge(th))
+    obs = pl.col(obs_col).ge(th)
     group_info = (
         fc
         .group_by(groupby_cols)

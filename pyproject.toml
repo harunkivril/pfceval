@@ -5,7 +5,7 @@ dependencies = [
   "polars",
   "matplotlib",
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 authors = [
   {name = "Harun KIVRIL", email = "harun.kivril@knmi.nl"}
 ]
@@ -20,4 +20,10 @@ keywords = ["forecast", "probabilistic", "verification", "polars", "evaluation"]
 classifiers = [
   "Development Status :: Alfa",
   "Programming Language :: Python"
+]
+
+[project.optional-dependencies]
+test = [
+  "properscoring",
+  "pytest",
 ]
