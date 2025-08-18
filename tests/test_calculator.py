@@ -36,7 +36,6 @@ def calculator_instance(sample_forecast_object) -> Calculator:
     """Creates a Calculator instance for testing."""
     return Calculator(sample_forecast_object, index_cols=["station_id", "date"])
 
-# --- Test Cases ---
 
 def test_init(calculator_instance, sample_forecast_object):
     """Tests the successful initialization of the Calculator."""

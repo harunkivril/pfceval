@@ -55,7 +55,6 @@ def sample_evaluation():
     }
     return Evaluation("test_exp", "lt", "sid", results)
 
-# --- Test Cases ---
 
 def test_init_and_properties(sample_evaluation):
     """Tests basic initialization and property/dunder methods."""
