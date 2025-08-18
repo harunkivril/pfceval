@@ -3,7 +3,7 @@ import polars as pl
 import json
 import logging
 
-from .calculator import Calculator
+from pfceval.calculator import Calculator
 
 class Evaluation:
     """

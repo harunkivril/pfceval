@@ -1,6 +1,6 @@
 import polars as pl
 import logging
-from .utils import collect
+from pfceval.utils import collect
 from copy import copy
 
 class Forecast:

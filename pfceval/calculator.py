@@ -2,9 +2,9 @@ import polars as pl
 import numpy as np
 import math
 
-from .data import Forecast
-from . import metrics
-from .utils import collect, collect_all
+from pfceval.data import Forecast
+from pfceval import metrics
+from pfceval.utils import collect, collect_all
 
 
 class Calculator:

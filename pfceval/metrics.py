@@ -1,5 +1,5 @@
 import polars as pl
-from .utils import collect, collect_all
+from pfceval.utils import collect, collect_all
 
 
 def absolute_error(pred_col: str, obs_col: str) -> pl.Expr:

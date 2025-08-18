@@ -5,7 +5,7 @@ import numpy as np
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-from .evaluation import Evaluation
+from pfceval.evaluation import Evaluation
 
 # Apply a specific matplotlib style for consistent plotting.
 plt.style.use("seaborn-v0_8-notebook")
