@@ -140,7 +140,7 @@ def brier_decomposition(
         resolution=(
             (pl.col("count")/n * (pl.col("obs_bar") - mean_obs)**2).sum()
         ),
-        uncertainity=mean_obs * (1-mean_obs),
+        uncertainty=mean_obs * (1-mean_obs),
     )
     return collect_all([decomp, obs_bar], engine)
 
@@ -172,7 +172,7 @@ def group_brier_decomposition(
     if isinstance(groupby_cols, str):
         groupby_cols = [groupby_cols]
 
-    probs = pl.mean_horizontal(pl.col(preds_cols).ge(th))
+    probs = pl.mean_horizontal(pl.col(preds_cols).ge(th)) # TODO: Make it gt(th)
     obs = pl.col(obs_col).ge(th)
     group_info = (
         fc
