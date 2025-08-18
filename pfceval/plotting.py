@@ -210,22 +210,24 @@ def plot_location_metrics(
     station_locations = evaluation["station_meta"]["values"]
     table = table.join(station_locations, on=evaluation.location_id_col)
 
-    if compare_with:
-        metrics = get_common_metrics([evaluation, compare_with], table_name)
-        table = table.join(
-            (
-                compare_with[table_name]["values"]
-                .filter(step=pl.duration(hours=step))
-                .select(pl.col(evaluation.location_id_col, *metrics))
-            ),
-            on=evaluation.location_id_col,
-        )
-
     if metrics is None:
         metrics = meta["metrics"]
     else:
         metrics = [metrics] if isinstance(metrics, str) else metrics
         assert all(metric in meta["metrics"] for metric in metrics)
+
+    if compare_with:
+        common_metrics = get_common_metrics([evaluation, compare_with], table_name)
+        table = table.join(
+            (
+                compare_with[table_name]["values"]
+                .filter(step=pl.duration(hours=step))
+                .select(pl.col(evaluation.location_id_col, *common_metrics))
+            ),
+            on=evaluation.location_id_col,
+        )
+        metrics = [x for x in metrics if x in common_metrics]
+        assert len(metrics) > 0, "Any of the specified metric is common."
 
     for metric in metrics:
         fig, ax = plt.subplots(
