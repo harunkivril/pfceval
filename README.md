@@ -1,6 +1,12 @@
 # pfceval
 
+![Project Status: Alpha](https://img.shields.io/badge/status-alpha-orange)
+![Downloads](https://img.shields.io/pypi/dm/pfceval)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+
 **pfceval** (Polars/Probabilistic Forecast Evaluation) is a robust Python library designed to streamline the evaluation of probabilistic forecasts, with particular emphasis on ensemble-based prediction systems. Leveraging the high-performance Polars data processing framework, pfceval efficiently handles large-scale datasets, enabling rapid computation of a comprehensive suite of forecast verification metrics. The library supports advanced evaluation workflows, including bootstrapped confidence intervals, threshold-based scoring methods, and detailed reliability diagnostics, empowering users to rigorously assess and interpret forecast performance with precision and clarity.
+
+> ⚠️ **Warning**: This package is in early alpha. Expect breaking changes and incomplete documentation.
 
 ## Features
 
@@ -22,6 +28,21 @@ Handles input forecast data:
 - Loads ensemble predictions and corresponding observations  
 - Supports filtering and in-memory operations  
 - Can be initialized from Parquet or other supported formats  
+
+**Example Forecast Data Format**
+Your input data should include:
+ - One observation column
+ - Multiple ensemble/Single prediction columns (e.g. pred_q1, pred_q2, …)
+ - Optional metadata (e.g., location SID, forecast step, run_id)
+
+*Example Data Format:*
+| SID | step | run_id   | pred_q1 | pred_q2 | pred_q3 | pred_q4 | observation |
+|-----|------|----------|---------|---------|---------|---------|-------------|
+| 101 | 6    | 20230801 | 2.1     | 2.3     | 1.9     | 2.0     | 2.2         |
+| 101 | 12   | 20230801 | 3.0     | 3.2     | 2.9     | 3.1     | 3.1         |
+| 102 | 6    | 20230801 | 1.1     | 1.2     | 1.0     | 1.3     | 1.2         |
+
+You can use any column names for your ensemble members — just set the correct ensemble_prefix when loading with Forecast.
 
 ### `pfceval.Calculator`
 
@@ -49,7 +70,7 @@ forecast = Forecast(
     fc_path="path/to/forecast.parquet",
     ensemble_prefix="pred_q",
     obs_col="observation",
-    bootstrap_cols="run_identifier",
+    bootstrap_cols="run_id",
     load_to_memory=True,
     engine="auto"
 )
@@ -129,3 +150,20 @@ plot_spread_rmse(eval1)
 
 # Rank histogram at 24 hours lead time
 plot_rank_histogram(eval1, step=24)
+
+```
+
+## Project Status
+
+**Status: Alpha**
+
+This library is currently in early development. Interfaces and APIs may change, and features are being actively added.  
+We welcome early adopters and contributors, but recommend caution when using it in production.
+
+### Contributing
+
+Contributions are welcome! Please open an issue to discuss your plans.
+
+### Acknowledgements
+
+This package builds on the work of the scientific forecasting and open-source data community. We thank contributors to properscoring, polars, and various ensemble verification tools.
