@@ -1,25 +1,33 @@
 [project]
 name = "pfceval"
 version = "0.0.1"
-dependencies = [
-  "polars",
-  "matplotlib",
-]
+description = "Probabilistic Ensemble Forecast Evaluation with Polars"
+readme = "README.md"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+
 authors = [
   {name = "Harun KIVRIL", email = "harun.kivril@knmi.nl"}
 ]
 maintainers = [
   {name = "Harun KIVRIL", email = "harun.kivril@knmi.nl"}
 ]
-description = "Probabilistic Forecast Evaluation with Polars"
-readme = "README.md"
-license = "MIT"
-license-files = ["LICEN[CS]E.*"]
+
+dependencies = [
+  "polars",
+  "matplotlib",
+]
+
 keywords = ["forecast", "probabilistic", "verification", "polars", "evaluation"]
+
 classifiers = [
-  "Development Status :: Alfa",
-  "Programming Language :: Python"
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Atmospheric Science",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
 ]
 
 [project.optional-dependencies]
@@ -27,3 +35,7 @@ test = [
   "properscoring",
   "pytest",
 ]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
