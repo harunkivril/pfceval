@@ -1,6 +1,5 @@
 import polars as pl
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 import cartopy.crs as ccrs
@@ -204,8 +203,9 @@ def plot_location_metrics(
     """
 
     meta = evaluation[table_name]["metadata"]
-    table = evaluation[table_name]["values"].filter(
-        step=pl.duration(hours=step)
+    table = evaluation[table_name]["values"]
+    table = table.filter(
+        pl.col(evaluation.lead_time_col)==pl.duration(hours=step)
     )
     station_locations = evaluation["station_meta"]["values"]
     table = table.join(station_locations, on=evaluation.location_id_col)
@@ -221,7 +221,7 @@ def plot_location_metrics(
         table = table.join(
             (
                 compare_with[table_name]["values"]
-                .filter(step=pl.duration(hours=step))
+                .filter(pl.col(compare_with.lead_time_col)==pl.duration(hours=step))
                 .select(pl.col(evaluation.location_id_col, *common_metrics))
             ),
             on=evaluation.location_id_col,
@@ -370,13 +370,13 @@ def plot_reliability_diagram(
     for i, ev in enumerate(evals):
         obs_bar = (
             ev[table_name]["values"]
-            .filter(step=pl.duration(hours=step))
-            .select(pl.exclude("step"))
+            .filter(pl.col(ev.lead_time_col)==pl.duration(hours=step))
+            .select(pl.exclude(ev.lead_time_col))
         )
 
         rel, res, unc = (
             ev[decomp_table]["values"]
-            .filter(step=pl.duration(hours=step))
+            .filter(pl.col(ev.lead_time_col)==pl.duration(hours=step))
             .select(pl.selectors.ends_with("_mean"))
             .to_numpy()
             .squeeze()
