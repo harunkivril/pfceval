@@ -4,6 +4,7 @@ import json
 import logging
 
 from pfceval.calculator import Calculator
+from pfceval.utils import ensure_duration_lead_time
 
 class Evaluation:
     """
@@ -227,6 +228,7 @@ class Evaluation:
             values (pl.DataFrame | pl.LazyFrame): The Polars data to store.
             metadata (dict): A dictionary of metadata for the table.
         """
+        values = ensure_duration_lead_time(values, self.lead_time_col)
         self.results[table_name] = {"values": values, "metadata": metadata}
 
 
