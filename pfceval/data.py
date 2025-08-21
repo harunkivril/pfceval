@@ -75,7 +75,7 @@ class Forecast:
         self.forecast = self.forecast.with_columns(
             pl.mean_horizontal(pl.col(self.pred_cols)).alias(deterministic_col),
             _bootstrap=pl.concat_str(
-                (pl.col(col) for col in bootstrap_cols),
+                (pl.col(col).cast(str) for col in bootstrap_cols),
                 separator="-_-", # Unique separator for bootstrap ID
             )
         )
