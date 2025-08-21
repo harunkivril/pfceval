@@ -42,7 +42,11 @@ def stack_overall_metrics(
     Raises:
         AssertionError: If specified metrics aren't in the first
                         evaluation's metadata.
+        ValueError: If no Evaluation objects are supplied.
     """
+    if len(evals) == 0:
+        raise ValueError("No evaluation objects supplied.")
+
     meta = evals[0][table_name]["metadata"]
 
     if metrics is None:
@@ -105,7 +109,11 @@ def plot_lead_time_metrics(
     Raises:
         AssertionError: If specified metrics aren't in the first
                         evaluation's metadata.
+        ValueError: If no Evaluation objects are supplied.
     """
+    if len(evals) == 0:
+        raise ValueError("No evaluation objects supplied.")
+
     meta = evals[0][table_name]["metadata"]
 
     if metrics is None:
@@ -357,6 +365,9 @@ def plot_reliability_diagram(
     """
     if len(evals) > 3:
         raise ValueError("Too many experiments to plot. Max 3 supported.")
+    
+    if len(evals) == 0:
+        raise ValueError("No evaluation objects supplied.")
 
     decomp_table = table_name.replace("obs_bar", "brier_decomp")
     th = int(table_name.split(":")[-1])
