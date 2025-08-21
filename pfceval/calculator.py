@@ -245,7 +245,7 @@ class Calculator:
                     with_replacement=True,
                     seed=self.seed
                 )
-            )
+            )["_bootstrap"]
 
             temp = (
                 self.forecast.forecast
@@ -384,7 +384,7 @@ class Calculator:
                     with_replacement=True,
                     seed=self.seed
                 )
-            )
+            )["_bootstrap"]
             lazy_df = (
                 self.metrics_df
                 .lazy()
