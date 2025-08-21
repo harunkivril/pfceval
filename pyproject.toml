@@ -3,8 +3,8 @@ name = "pfceval"
 version = "0.0.1"
 description = "Probabilistic Ensemble Forecast Evaluation with Polars"
 readme = "README.md"
-requires-python = ">=3.10"
-license = {text = "MIT"}
+requires-python = ">=3.10
+license = { file = "LICENSE" }
 
 authors = [
   {name = "Harun KIVRIL", email = "harun.kivril@knmi.nl"}
@@ -16,6 +16,7 @@ maintainers = [
 dependencies = [
   "polars",
   "matplotlib",
+  "cartopy",
 ]
 
 keywords = ["forecast", "probabilistic", "verification", "polars", "evaluation"]
