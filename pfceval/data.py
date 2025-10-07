@@ -134,3 +134,12 @@ class Forecast:
             Forecast: Shallow copy of current Forecast instance.
         """
         return copy(self)
+
+    def nrows(self):
+        """
+        Get number of rows in the forecast dataframe.
+
+        Returns:
+            int: Number of rows
+        """
+        return collect(self.forecast.select(pl.len())).item()
