@@ -1,6 +1,7 @@
 import polars as pl
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -8,6 +9,23 @@ from pfceval.evaluation import Evaluation
 
 # Apply a specific matplotlib style for consistent plotting.
 plt.style.use("seaborn-v0_8-notebook")
+def check_data_sizes(evals, table_name):
+    data_size = evals[0][table_name]["metadata"].get("data_size")
+    if not data_size:
+        logging.warning(
+            "The data size of (at least) one of the tables is not set. "
+            + "Be sure to compare apples to apples" 
+        )
+        return
+    for ev in evals[1:]:
+        ev_data_size = ev[table_name]["metadata"].get("data_size")
+        if ev_data_size != data_size:
+            logging.warning(
+                f"Evaluation tables with different sizes found in {table_name}"
+                + f" N:{ev_data_size} vs N:{data_size} "
+                + "Be sure to compare apples to apples" 
+            )
+            return
 
 
 def stack_overall_metrics(
@@ -55,6 +73,7 @@ def stack_overall_metrics(
         metrics = [metrics] if isinstance(metrics, str) else metrics
         assert all(metric in meta["metrics"] for metric in metrics)
 
+    check_data_sizes(evals, table_name)
     stacked = []
     for ev in evals:
         table = (
@@ -122,6 +141,7 @@ def plot_lead_time_metrics(
         metrics = [metrics] if isinstance(metrics, str) else metrics
         assert all(metric in meta["metrics"] for metric in metrics)
 
+    check_data_sizes(evals, table_name)
     for metric in metrics:
         fig = plt.figure(figsize=(10, 6))
         ax = plt.gca()
@@ -225,6 +245,7 @@ def plot_location_metrics(
         assert all(metric in meta["metrics"] for metric in metrics)
 
     if compare_with:
+        check_data_sizes([evaluation, compare_with], table_name)
         common_metrics = get_common_metrics([evaluation, compare_with], table_name)
         table = table.join(
             (
@@ -370,6 +391,8 @@ def plot_reliability_diagram(
         raise ValueError("No evaluation objects supplied.")
 
     decomp_table = table_name.replace("obs_bar", "brier_decomp")
+    check_data_sizes(evals, table_name)
+    check_data_sizes(evals, decomp_table)
     th = int(table_name.split(":")[-1])
     color_list = plt.colormaps["tab10"].colors
 
@@ -560,6 +583,6 @@ def plot_rank_histogram(
     ax.grid(True)
     ax.hist(bins[:-1], bins, weights=counts)
     ax.hlines(mean_counts, min(bins), max(bins), color="black", linestyle="--")
-    ax.set_title(f"Rank Histogram | Step:{step}")
+    ax.set_title(f"Rank Histogram | Step:{step} | {ev.experiment_name}")
 
     fig.show()

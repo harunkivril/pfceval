@@ -21,7 +21,7 @@ class Evaluation:
 
     def __init__(
             self, experiment_name: str, lead_time_col: str,
-            location_id_col: str, results: dict
+            location_id_col: str, results: dict, data_size: int | None = None
     ):
         """
         Initializes an Evaluation object.
@@ -36,6 +36,7 @@ class Evaluation:
         self.results = results
         self.lead_time_col = lead_time_col
         self.location_id_col = location_id_col
+        self.data_size = data_size
 
     def save_results(self, base_path: str):
         """
@@ -60,6 +61,7 @@ class Evaluation:
                 "experiment_name": self.experiment_name,
                 "lead_time_col": self.lead_time_col,
                 "location_id_col": self.location_id_col,
+                "data_size": self.data_size,
             }
         }
 
@@ -181,7 +183,13 @@ class Evaluation:
             x.replace("absolute_error", "mae").replace("squared_error", "mse")
             for x in calculator.added_metrics
         ]
-        obj = cls(experiment_name, lead_time_col, location_id_col, results={})
+        obj = cls(
+            experiment_name, 
+            lead_time_col, 
+            location_id_col, 
+            results={},
+            data_size=calculator.forecast.nrows()
+        )
         obj.add_table(
             "overall_metrics",
             calculator.get_metrics(),
@@ -229,8 +237,9 @@ class Evaluation:
             metadata (dict): A dictionary of metadata for the table.
         """
         values = ensure_duration_lead_time(values, self.lead_time_col)
+        if "data_size" not in metadata:
+            metadata["data_size"] = self.data_size
         self.results[table_name] = {"values": values, "metadata": metadata}
-
 
     def add_brier_decomp(self, calculator: Calculator, n_iter: int,
                          th: float, CI: float):
