@@ -6,10 +6,15 @@ from polars.testing import assert_frame_equal
 from pfceval.evaluation import Evaluation
 from pathlib import Path
 
+class MockForecast():
+    def nrows(self):
+        return 125
+
 class MockCalculator:
     """A mock of the Calculator class for predictable test inputs."""
     def __init__(self):
         self.added_metrics = ["absolute_error", "spread"]
+        self.forecast = MockForecast()
 
     def get_metrics(self, groupby_cols=None):
         if groupby_cols is None:
@@ -37,8 +42,7 @@ class MockCalculator:
         counts["counts"] = [[10, 20]]
         counts = pl.DataFrame(counts)
         bins = [0, 1, 2]
-        return counts, bins
-    
+        return counts, bins    
 
 @pytest.fixture
 def mock_calculator():
@@ -63,6 +67,7 @@ def test_init_and_properties(sample_evaluation):
     # Test __getitem__
     assert "source" in sample_evaluation["metrics_table"]["metadata"]
     assert isinstance(sample_evaluation["metrics_table"]["values"], pl.DataFrame)
+
 
 def test_save_and_load_report(sample_evaluation, tmp_path: Path):
     """Tests the critical save and load functionality."""
@@ -96,10 +101,12 @@ def test_save_and_load_report(sample_evaluation, tmp_path: Path):
     assert_frame_equal(loaded_eval["metrics_table"]["values"], sample_evaluation["metrics_table"]["values"])
     assert loaded_eval["config_table"]["values"]["param"] == 10
 
+
 def test_load_report_file_not_found(tmp_path: Path):
     """Tests that loading from a non-existent path raises an error."""
     with pytest.raises(FileNotFoundError):
         Evaluation.load_report(str(tmp_path / "non_existent"))
+
 
 def test_fill_evaluation(mock_calculator):
     """Tests the classmethod for populating an Evaluation object."""
@@ -122,10 +129,11 @@ def test_fill_evaluation(mock_calculator):
     assert expected_tables.issubset(set(eval_obj.tables()))
     assert eval_obj["overall_metrics"]["metadata"]["metrics"] == ["mae", "spread"]
 
+
 def test_add_brier_and_rank(mock_calculator):
     """Tests adding Brier decomposition and rank histogram tables."""
     eval_obj = Evaluation("test_exp", "lt", "sid", {})
-    
+
     # Add Brier
     eval_obj.add_brier_decomp(mock_calculator, n_iter=100, th=0.5, CI=0.9)
     assert "bootstrapped_brier_decomp_th:0.5" in eval_obj.tables()
@@ -136,6 +144,7 @@ def test_add_brier_and_rank(mock_calculator):
     eval_obj.add_rank_histogram(mock_calculator, n_bins=10)
     assert "lead_time_rank_histogram" in eval_obj.tables()
     assert eval_obj["lead_time_rank_histogram"]["metadata"]["bins"] == [0, 1, 2]
+
 
 def test_extend(sample_evaluation):
     """Tests merging two Evaluation objects."""
@@ -169,7 +178,7 @@ def test_extend(sample_evaluation):
         "test_exp", "lt", "sid", {"metrics_table": other_eval["other_table"]})
     with pytest.raises(AssertionError, match="Table names conflict"):
         sample_evaluation.extend(conflicting_eval)
-        
+
     # Case 4: Mismatched lead_time_col should raise an error
     mismatched_eval = Evaluation("test_exp", "different_lt", "sid", other_results)
     with pytest.raises(AssertionError, match="Lead time columns must match"):
