@@ -6,7 +6,7 @@ import numpy as np
 import polars as pl
 
 from time import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import product
 
 
@@ -50,7 +50,7 @@ def collect_all(dataframe_list, engine="streaming"):
     return dataframe_list
 
 
-def get_example_forecast_paths(n_files=2):
+def get_example_forecast_paths(n_files=2, skip_existing=True):
     """
     Checks if example forecast files exist in a temp directory.
     If not, generates synthetic forecast data and saves them.
@@ -74,7 +74,7 @@ def get_example_forecast_paths(n_files=2):
     ]
 
     # Check if files already exist
-    if all(os.path.exists(path) for path in file_paths):
+    if all(os.path.exists(path) for path in file_paths) and skip_existing:
         return file_paths
 
     # Generate synthetic forecast data
@@ -82,15 +82,17 @@ def get_example_forecast_paths(n_files=2):
     unseen_sta = {101: True, 102: True, 103: False, 104: False, 105: False}
     latitudes = {101: 52.11, 102: 51.52, 103: 53.44, 104: 54.01, 105: 51.75}
     longitudes = {101: 5.18, 102: 4.87, 103: 6.23, 104: 5.26, 105: 4.54}
-    run_ids = [1, 2, 3, 4, 5, 6, 7]
+    run_ids = list(range(100))
+    n_ens = 20
+    start_date = datetime(year=2022, month=1, day=2)
     model_run_time = pl.select(pl.date_range(
-        start=datetime(year=2022, month=1, day=2), 
-        end=datetime(year=2022, month=1, day= 2 + len(run_ids)), 
+        start=start_date, 
+        end=start_date + timedelta(days=len(run_ids)), 
         interval="1d",
     )).to_numpy().squeeze()
     model_run_time = {
         run_id: run_time for run_id, run_time in zip(run_ids, model_run_time)}
-    steps = list(range(1, 49))
+    steps = list(range(1, 15))
 
     rows = [{
         "model_time": str(model_run_time[run_id]),
@@ -110,18 +112,35 @@ def get_example_forecast_paths(n_files=2):
     )
     n_rows = df.shape[0]
 
-    for i , path in enumerate(file_paths):
-        
+    ws = np.random.standard_normal(size=n_rows)
+
+    for i, path in enumerate(file_paths):
+        # Add wind speed column and scale it
         df = df.with_columns(
-            wind_speed=np.random.standard_normal(size=n_rows),
-            **{ 
-                # Add one of them bias
-                f"pred_q{ens}": np.random.normal(loc=13-3*i, scale=5, size=n_rows) 
-                for ens in range(50)
-            }
+            wind_speed=ws,
+        ).with_columns(
+            wind_speed=(pl.col("wind_speed") * 2 + 15).clip(0)
         )
+
+        # Step duration in hours
+        step_hours = df.select(pl.col("step").dt.total_hours()).to_numpy().squeeze()
+
+        forecast_bias = 1 * (1 - np.exp(-step_hours / 20))  # time scale ~1 day
+
+        # Row-wise random shift
+        shift = np.random.uniform(-0.5 - forecast_bias, 0.5 + forecast_bias, size=n_rows)
+        randomness = np.random.normal(1.1, 0.2, size=n_rows)
+        # Ensemble quantile predictions
         df = df.with_columns(
-            wind_speed=pl.col("wind_speed")*(pl.col("step").dt.total_hours()/5 + 3) + 10
+            **{
+                f"pred_q{ens}": (
+                    pl.col("wind_speed") +
+                    shift * (1 + i * 0.1) +
+                    ((1 / (n_ens * 2) + ens / n_ens) - 0.5)
+                    * randomness * (1 / np.exp(-step_hours / 25))
+                ).clip(0)
+                for ens in range(n_ens)
+            }
         )
         df.write_parquet(path)
 
