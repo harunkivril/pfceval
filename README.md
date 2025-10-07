@@ -4,9 +4,13 @@
 ![Downloads](https://img.shields.io/pypi/dm/pfceval)
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 
-**pfceval** (Polars/Probabilistic Forecast Evaluation) is a robust Python library designed to streamline the evaluation of probabilistic forecasts, with particular emphasis on ensemble-based prediction systems. Leveraging the high-performance Polars data processing framework, pfceval efficiently handles large-scale datasets, enabling rapid computation of a comprehensive suite of forecast verification metrics. The library supports advanced evaluation workflows, including bootstrapped confidence intervals, threshold-based scoring methods, and detailed reliability diagnostics, empowering users to rigorously assess and interpret forecast performance with precision and clarity.
+**pfceval** (Polars/Probabilistic Forecast Evaluation) is a robust Python library designed to streamline the evaluation of univariate probabilistic forecasts, with particular emphasis on ensemble-based prediction systems. Leveraging the high-performance Polars data processing framework, pfceval efficiently handles large-scale datasets, enabling rapid computation of a comprehensive suite of forecast verification metrics. The library supports advanced evaluation workflows, including bootstrapped confidence intervals, threshold-based scoring methods, and detailed reliability diagnostics, empowering users to rigorously assess and interpret forecast performance with precision and clarity.
 
-> ⚠️ **Warning**: This package is in early alpha. Expect breaking changes and incomplete documentation.
+Refer to the template notebooks for example usage:
+
+[Basic Evaluation](templates/basic_evaluation_template.ipynb)
+
+[Detailed Evaluation](templates/detailed_evaluation_template.ipynb)
 
 ## Features
 
@@ -59,7 +63,7 @@ Computes forecast evaluation metrics:
 Aggregates results into structured evaluation reports:  
 - Uses a `Calculator` to compute metrics  
 - Supports bootstrapping with `n_iter` and confidence intervals (`CI`)  
-- Allows report extension and saving to JSON  
+- Allows report extension, saving and loading
 - Adds diagnostic plots like rank histograms and Brier decomposition 
 
 ```python
@@ -79,7 +83,8 @@ forecast = Forecast(
 calc = Calculator(forecast, index_cols=["SID", "step"])
 calc.add_absolute_error()
 calc.add_crps()
-calc.add_brier(threshold=0.5)
+calc.add_brier(threshold=9)
+calc.add_brier(threshold=12)
 
 # Create evaluation report
 report = Evaluation.fill_evaluation(
@@ -88,22 +93,22 @@ report = Evaluation.fill_evaluation(
     lead_time_col="step",
     location_id_col="SID",
     bootstrap=True,
-    n_iter=1000,
+    n_iter=100,
     CI=0.9,
     location_metrics=True
 )
 
 # Add diagnostics
 report.add_rank_histogram(calculator=calc, nbins=20)
-report.add_brier_decomp(calculator=calc, th=0.5, n_iter=1000, CI=0.9)
+report.add_brier_decomp(calculator=calc, th=9, n_iter=100, CI=0.9)
 
 # Save results
-report.save_results("evaluation_report.json")
+report.save_results("evaluation_report")
 ```
 
 ## Plotting
 
-The `pfceval.plotting` module provides visualization functions to explore and communicate forecast evaluation results effectively. These functions help visualize metrics across lead times, locations, and thresholds and include diagnostic plots for forecast quality.
+The `pfceval.plotting` module provides visualization functions to explore and communicate forecast evaluation results effectively. These functions help visualize metrics across lead times, locations, and thresholds and include diagnostic plots for forecast quality using the pfceval.Evaluation objects.
 
 ### Plot Types
 
@@ -133,11 +138,11 @@ from pfceval.plotting import (
 )
 
 # Load evaluation results
-eval1 = Evaluation.load("eval_exp1")
-eval2 = Evaluation.load("eval_exp2")
+eval1 = Evaluation.load("evaluation_report")
+eval2 = Evaluation.load("evaluation_report2")
 
 # Plot metrics over lead time for multiple experiments
-plot_lead_time_metrics(eval1, eval2, metrics=["crps", "brier_score"])
+plot_lead_time_metrics(eval1, eval2, metrics=["crps", "brier_score_th:12"])
 
 # Plot spatial distribution of a metric at lead time 24 hours
 plot_location_metrics(step=24, evaluation=eval1)
