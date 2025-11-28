@@ -35,7 +35,7 @@ def test_end_to_end_workflow(parquet_file, tmp_path: Path):
     # This now uses your REAL metrics, not mocks
     calc = Calculator(forecast=fc, index_cols=["lead_time", "station_id"])
     calc.add_absolute_error()
-    calc.add_spread()
+    calc.add_variance()
 
     # 3. Evaluation: Fill, save, and load a report
     evaluation = Evaluation.fill_evaluation(
@@ -44,7 +44,7 @@ def test_end_to_end_workflow(parquet_file, tmp_path: Path):
         lead_time_col="lead_time",
         location_id_col="station_id"
     )
-    
+
     # Save to a temporary directory
     save_path = tmp_path / "integration_results"
     evaluation.save_results(str(save_path))
@@ -55,9 +55,9 @@ def test_end_to_end_workflow(parquet_file, tmp_path: Path):
     # 4. Assert: Check if the final result is as expected
     assert loaded_evaluation.experiment_name == "integration_test"
     assert "overall_metrics" in loaded_evaluation.tables()
-    
+
     overall_metrics = loaded_evaluation["overall_metrics"]["values"]
     # Based on the sample data, the absolute error is 0 for both rows.
     # The deterministic_col (mean_pred) would be 10 and 15.
     # The absolute error would be abs(10-10)=0 and abs(15-15)=0. MAE is 0.
-    assert overall_metrics["mae"].item() == pytest.approx(0.0) 
+    assert overall_metrics["mae"].item() == pytest.approx(0.0)

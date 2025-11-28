@@ -13,22 +13,22 @@ class MockForecast():
 class MockCalculator:
     """A mock of the Calculator class for predictable test inputs."""
     def __init__(self):
-        self.added_metrics = ["absolute_error", "spread"]
+        self.added_metrics = ["absolute_error", "variance"]
         self.forecast = MockForecast()
 
     def get_metrics(self, groupby_cols=None):
         if groupby_cols is None:
-            return pl.DataFrame({"mae": [0.5], "spread": [0.8]})
+            return pl.DataFrame({"mae": [0.5], "variance": [0.8]})
         if isinstance(groupby_cols, str):
             groupby_cols = [groupby_cols]
         metrics = {col: [1] for col in groupby_cols}
         metrics["mae"] = [0.5]
-        metrics["spread"] = [0.8]
+        metrics["variance"] = [0.8]
         return pl.DataFrame(metrics)
 
     def bootstrap_metrics(self, n_iter, groupby_cols, CI):
-        return pl.DataFrame({groupby_cols: [1], "mae_mean": [0.5], "spread_mean": [0.8]})
-    
+        return pl.DataFrame({groupby_cols: [1], "mae_mean": [0.5], "variance_mean": [0.8]})
+
     def get_station_meta(self, station_id_col):
         return pl.DataFrame({station_id_col: ["A", "B"], "lat": [0, 1]})
 
@@ -36,13 +36,13 @@ class MockCalculator:
         decomp = pl.DataFrame({groupby_cols: [1], "reliability": [0.1]})
         obs_bar = pl.DataFrame({groupby_cols: [1], "obs_bar": [0.2]})
         return decomp, obs_bar
-    
+
     def get_rank_histogram(self, n_bins, groupby_cols):
         counts = {col: [1] for col in groupby_cols}
         counts["counts"] = [[10, 20]]
         counts = pl.DataFrame(counts)
         bins = [0, 1, 2]
-        return counts, bins    
+        return counts, bins
 
 @pytest.fixture
 def mock_calculator():
@@ -127,7 +127,7 @@ def test_fill_evaluation(mock_calculator):
         "bootstraped_lead_time_metrics"
     }
     assert expected_tables.issubset(set(eval_obj.tables()))
-    assert eval_obj["overall_metrics"]["metadata"]["metrics"] == ["mae", "spread"]
+    assert eval_obj["overall_metrics"]["metadata"]["metrics"] == ["mae", "variance"]
 
 
 def test_add_brier_and_rank(mock_calculator):
@@ -154,9 +154,9 @@ def test_extend(sample_evaluation):
 
     # Case 1: Extend without conflict
     base_eval_copy = Evaluation(
-        sample_evaluation.experiment_name, 
-        sample_evaluation.lead_time_col, 
-        sample_evaluation.location_id_col, 
+        sample_evaluation.experiment_name,
+        sample_evaluation.lead_time_col,
+        sample_evaluation.location_id_col,
         sample_evaluation.results.copy()
     )
     base_eval_copy.extend(other_eval)
@@ -165,9 +165,9 @@ def test_extend(sample_evaluation):
 
     # Case 2: Extend with a prefix
     base_eval_copy = Evaluation(
-        sample_evaluation.experiment_name, 
-        sample_evaluation.lead_time_col, 
-        sample_evaluation.location_id_col, 
+        sample_evaluation.experiment_name,
+        sample_evaluation.lead_time_col,
+        sample_evaluation.location_id_col,
         sample_evaluation.results.copy()
     )
     base_eval_copy.extend(other_eval, right_prefix="new")

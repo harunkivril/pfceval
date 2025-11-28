@@ -92,12 +92,12 @@ class Calculator:
         if "absolute_error" not in self.added_metrics:
             self.add_absolute_error()
 
-    def add_spread(self):
+    def add_variance(self):
         """
-        Adds the spread metric to the metrics_df DataFrame.
+        Adds the variance metric to the metrics_df DataFrame.
         """
-        expression = metrics.spread(self.forecast.pred_cols)
-        self.add_metric("spread", expression)
+        expression = metrics.variance(self.forecast.pred_cols)
+        self.add_metric("variance", expression)
 
     def add_crps(self):
         """

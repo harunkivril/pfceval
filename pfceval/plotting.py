@@ -14,7 +14,7 @@ def check_data_sizes(evals, table_name):
     if not data_size:
         logging.warning(
             "The data size of (at least) one of the tables is not set. "
-            + "Be sure to compare apples to apples" 
+            + "Be sure to compare apples to apples"
         )
         return
     for ev in evals[1:]:
@@ -23,7 +23,7 @@ def check_data_sizes(evals, table_name):
             logging.warning(
                 f"Evaluation tables with different sizes found in {table_name}"
                 + f" N:{ev_data_size} vs N:{data_size} "
-                + "Be sure to compare apples to apples" 
+                + "Be sure to compare apples to apples"
             )
             return
 
@@ -296,7 +296,7 @@ def plot_location_metrics(
             vmin, vmax = -abs_max, abs_max
 
         img = ax.scatter(
-            lon, lat, s=dot_size, c=value, vmax=vmax, vmin=vmin, 
+            lon, lat, s=dot_size, c=value, vmax=vmax, vmin=vmin,
             alpha=0.7, cmap=cmap
         )
         cbar = fig.colorbar(img)
@@ -386,14 +386,14 @@ def plot_reliability_diagram(
     """
     if len(evals) > 3:
         raise ValueError("Too many experiments to plot. Max 3 supported.")
-    
+
     if len(evals) == 0:
         raise ValueError("No evaluation objects supplied.")
 
     decomp_table = table_name.replace("obs_bar", "brier_decomp")
     check_data_sizes(evals, table_name)
     check_data_sizes(evals, decomp_table)
-    th = int(table_name.split(":")[-1])
+    th = float(table_name.split(":")[-1])
     color_list = plt.colormaps["tab10"].colors
 
     gs, fig, rel_ax = prep_reliability_ax()
@@ -455,7 +455,7 @@ def plot_reliability_diagram(
         )
         hist_ax.set_ylabel("Counts")
         hist_ax.set_xlim(rel_ax.get_xlim())
-        hist_ax.set_xlabel("Predicted Probability") 
+        hist_ax.set_xlabel("Predicted Probability")
 
     pos_class_ratio = obs_bar["mean_group"].first()
     hist_ax.set_title(f"Positive Class Ratio: {pos_class_ratio:.4f}")
@@ -484,14 +484,14 @@ def plot_spread_rmse(
         table_name (str, optional): Table name with metrics. Defaults to
                                      "bootstraped_lead_time_metrics".
     Raises:
-        AssertionError: If "spread" or "mse" metrics aren't in the
+        AssertionError: If "variance" or "mse" metrics aren't in the
                         table's metadata.
     """
 
     table = ev[table_name]["values"]
     meta = ev[table_name]["metadata"]
     metrics = meta["metrics"]
-    assert "spread" in metrics, "The table must contain 'spread' metric."
+    assert "variance" in metrics, "The table must contain 'variance' metric."
     assert "mse" in metrics, "The table must contain 'mse' metric."
 
     table = (
@@ -501,6 +501,7 @@ def plot_spread_rmse(
             pl.col("^mse_.*$").sqrt().name
             .map(lambda x: x.replace("mse_", "rmse_"))
         )
+        .with_columns(pl.col("^variance_.*$").sqrt().alias("^spread_.*$"))
     )
 
     fig = plt.figure(figsize=(10, 6))

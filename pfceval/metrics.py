@@ -30,17 +30,17 @@ def squared_error(pred_col: str, obs_col: str) -> pl.Expr:
     return (pl.col(pred_col) - pl.col(obs_col))**2
 
 
-def spread(pred_cols: list[str]) -> pl.Expr:
+def variance(pred_cols: list[str]) -> pl.Expr:
     """
-    Calculates the ensemble spread (standard deviation of predictions).
+    Calculates the ensemble variance (variance of predictions).
 
     Args:
         pred_cols (list[str]): List of prediction column names.
 
     Returns:
-        pl.Expr: Polars expression for ensemble spread.
+        pl.Expr: Polars expression for ensemble variance.
     """
-    return pl.concat_list(pred_cols).list.std()
+    return pl.concat_list(pred_cols).list.var()
 
 
 def crps(pred_cols: list[str], obs_col: str) -> pl.Expr:

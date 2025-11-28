@@ -3,11 +3,11 @@ import pytest
 import numpy as np
 import properscoring as ps
 from pfceval.metrics import (
-    absolute_error, 
-    squared_error, 
-    spread, 
-    crps, 
-    brier_score, 
+    absolute_error,
+    squared_error,
+    variance,
+    crps,
+    brier_score,
     brier_decomposition
 )
 
@@ -34,15 +34,15 @@ def test_squared_error(sample_df):
     assert result["sq_err"].to_list() == pytest.approx(expected)
 
 
-def test_spread(sample_df):
-    expr = spread(["pred1", "pred2"])
-    result = sample_df.select(expr.alias("spread"))
-    
+def test_variance(sample_df):
+    expr = variance(["pred1", "pred2"])
+    result = sample_df.select(expr.alias("variance"))
+
     preds = np.vstack(
         [sample_df["pred1"].to_numpy(), sample_df["pred2"].to_numpy()]).T
-    expected = np.std(preds, axis=1, ddof=1)  # ddof=1 for sample std dev
-    
-    assert result["spread"].to_list() == pytest.approx(expected.tolist(), rel=1e-6)
+    expected = np.var(preds, axis=1, ddof=1)  # ddof=1 for sample var
+
+    assert result["variance"].to_list() == pytest.approx(expected.tolist(), rel=1e-6)
 
 def test_crps(sample_df):
     expr = crps(["pred1", "pred2"], "obs")

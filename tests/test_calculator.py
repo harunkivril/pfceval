@@ -54,14 +54,14 @@ def test_add_metric(calculator_instance):
     initial_col_count = len(calc.metrics_df.columns)
 
     # 1. Add a new metric
-    calc.add_metric("spread", metrics.spread(calc.forecast.pred_cols))
-    assert "spread" in calc.metrics_df.columns
-    assert "spread" in calc.added_metrics
+    calc.add_metric("variance", metrics.variance(calc.forecast.pred_cols))
+    assert "variance" in calc.metrics_df.columns
+    assert "variance" in calc.added_metrics
     assert len(calc.metrics_df.columns) == initial_col_count + 1
-    assert calc.metrics_df["spread"].to_list() == pytest.approx([0.707107, 2.12132, 2.12132, 0.707107])
+    assert calc.metrics_df["variance"].to_list() == pytest.approx([0.5, 4.5, 4.5, 0.5])
 
     # 2. Try adding the same metric again; nothing should change
-    calc.add_metric("spread", metrics.spread(calc.forecast.pred_cols))
+    calc.add_metric("variance", metrics.variance(calc.forecast.pred_cols))
     assert len(calc.added_metrics) == 1
     assert len(calc.metrics_df.columns) == initial_col_count + 1
 
@@ -88,18 +88,18 @@ def test_get_metrics_no_grouping(calculator_instance):
     calc = calculator_instance
     calc.add_absolute_error() # mean is 0.5
     calc.add_squared_error() # mean is 0.25
-    calc.add_spread()        # spread is 1.414213562373095
+    calc.add_variance()      # variance is 5.5
 
     metrics_result = calc.get_metrics()
     assert metrics_result.shape == (1, 3)
     # Check that columns were renamed correctly
     assert "mae" in metrics_result.columns
     assert "mse" in metrics_result.columns
-    assert "spread" in metrics_result.columns
+    assert "variance" in metrics_result.columns
     # Check values
     assert metrics_result["mae"].item() == pytest.approx(0.5)
     assert metrics_result["mse"].item() == pytest.approx(0.25)
-    assert metrics_result["spread"].item() == pytest.approx(1.414213562373095)
+    assert metrics_result["variance"].item() == pytest.approx(2.5)
 
 def test_get_metrics_with_grouping(calculator_instance):
     """Tests getting aggregated metrics with grouping."""
@@ -121,8 +121,8 @@ def test_get_metrics_with_grouping(calculator_instance):
 def test_bootstrap_metrics(calculator_instance):
     """Tests the bootstrap functionality for deterministic results."""
     calc = calculator_instance
-    calc.add_spread()
-    calc.add_crps() 
+    calc.add_variance()
+    calc.add_crps()
 
     # Since the metrics are constant, the mean and quantiles should be the same
     # regardless of the bootstrap samples. This is a great way to test the
@@ -133,13 +133,13 @@ def test_bootstrap_metrics(calculator_instance):
     # Check for correct column naming with CI=0.95 -> q97.5 and q02.5
     expected_cols = [
         "station_id", "crps_q003", "crps_mean", "crps_q097",
-        "spread_q003", "spread_mean", "spread_q097"
+        "variance_q003", "variance_mean", "variance_q097"
     ]
     assert sorted(bootstrap_result.columns) == sorted(expected_cols)
 
     # Check values for one group
     station_b_metrics = bootstrap_result.filter(pl.col("station_id") == "B")
-    assert station_b_metrics["spread_mean"].item() >= station_b_metrics["spread_q003"].item()
-    assert station_b_metrics["spread_mean"].item() <= station_b_metrics["spread_q097"].item()
+    assert station_b_metrics["variance_mean"].item() >= station_b_metrics["variance_q003"].item()
+    assert station_b_metrics["variance_mean"].item() <= station_b_metrics["variance_q097"].item()
     assert station_b_metrics["crps_mean"].item() >= station_b_metrics["crps_q003"].item()
     assert station_b_metrics["crps_mean"].item() <= station_b_metrics["crps_q097"].item()
