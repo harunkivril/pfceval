@@ -501,7 +501,10 @@ def plot_spread_rmse(
             pl.col("^mse_.*$").sqrt().name
             .map(lambda x: x.replace("mse_", "rmse_"))
         )
-        .with_columns(pl.col("^variance_.*$").sqrt().alias("^spread_.*$"))
+        .with_columns(
+            pl.col("^variance_.*$").sqrt()
+            .name.map(lambda name: name.replace("variance", "spread"))
+        )
     )
 
     fig = plt.figure(figsize=(10, 6))
