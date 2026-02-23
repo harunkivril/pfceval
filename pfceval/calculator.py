@@ -384,12 +384,12 @@ class Calculator:
                     with_replacement=True,
                     seed=self.seed
                 )
-            )["_bootstrap"]
+            )
             lazy_df = (
                 self.metrics_df
                 .lazy()
+                .join(selected.lazy(), on="_bootstrap", how="inner")
                 .with_columns(iteration=iteration)
-                .filter(pl.col("_bootstrap").is_in(selected))
                 .group_by(groupby_cols)
                 .agg(pl.col(self.added_metrics).mean())
             )
